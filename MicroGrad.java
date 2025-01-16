@@ -1,3 +1,5 @@
+import java.util.*;
+
 /** A Value class representing each numerical nodes or variables. */
 class Value {
   double value;
@@ -44,6 +46,34 @@ class Value {
     return returnValue;
   }
 
+  ArrayList<Value> getTopologicalOrder() {
+    ArrayList<Value> topologicalOrder = new ArrayList<>();
+    HashSet<Value> visited = new HashSet<>();
+
+    recurseTopological(this, topologicalOrder, visited);
+
+    System.out.println("Topological Order: ");
+    for (Value value : topologicalOrder) {
+      System.out.println(value.label);
+    }
+
+    return topologicalOrder;
+  }
+
+  private void recurseTopological(
+    Value node, ArrayList<Value> topologicalOrder, HashSet<Value> visited) {
+      if (!visited.contains(node)) {
+        visited.add(node);
+        if (node.parent != null) {
+          for (int i=0; i<node.parent.length; i++) {
+            Value parentNode = node.parent[i];
+            recurseTopological(parentNode, topologicalOrder, visited);
+          }
+        }
+        topologicalOrder.add(node);
+      }
+  }
+
   void computeParentGradient() {
     if (this.operator == "+") {
         Value parentNode1 = this.parent[0];
@@ -78,14 +108,13 @@ class Value {
 
 public class MicroGrad {
   public static void main(String[] args) {
-    double h = 0.0001;
-    double x = 2.0/3.0;
-    double derivative = (f(h + x) - f(x)) / h;
-
     neuron();
   }
 
   private static void neuron() {
+    // Equation: n = x1.w1 + x2.w2 + b
+    // Equation: o = tanh(n)
+
     // Inputs x1, x2
     Value x1 = new Value(2.0, "x1");
     Value x2 = new Value(0.0, "x2");
@@ -104,92 +133,19 @@ public class MicroGrad {
     Value n = x1w1x2w2.add(b, "n");
     Value o = n.tanh("o");
 
-    // do/do = 1
+    ArrayList<Value> topologicalOrder = o.getTopologicalOrder();
+    
+    // Traversing in the reverse Topological order to make sure the
+    // dependencies have their gradient calculated beforehand.
+    Collections.reverse(topologicalOrder);
+
     o.grad = 1.0;
-    o.computeParentGradient();
-    n.computeParentGradient();
-    x1w1x2w2.computeParentGradient();
-    x1w1.computeParentGradient();
-    x2w2.computeParentGradient();
-
-    // // do/dn = 1 - tanh(x)^2
-    // n.grad = 1 - o.multiply(o, "dn").value;
-
-    // // do/dx1w1x2w2 = do/dn * dn/dx1w1x2w2
-    // x1w1x2w2.grad = n.grad;
-
-    // // do/db = do/dn * dn/db
-    // b.grad = n.grad;
-
-    // // do/dx1dw1 = do/dx1w1x2w2 * dx1w1x2w2/dx1w1
-    // x1w1.grad = x1w1x2w2.grad;
-
-    // // do/dx2dw2 = do/dx1w1x2w2 * dx1w1x2w2/dx2w2
-    // x2w2.grad = x1w1x2w2.grad;
-
-    // // do/dx1 = do/dx1w1 * dx1w1/dx1
-    // x1.grad = x1w1.grad * w1.value;
-
-    // // do/dx2 = do/dx2w2 * dx2w2/dx2
-    // x2.grad = x2w2.grad * w2.value;
-
-    // // do/dw1 = do/dx1w1 * dx1w1/dw1
-    // w1.grad = x1w1.grad * x1.value;
-
-    // // do/dw2 = do/dx2w2 * dx2w2/dw2
-    // w2.grad = x2w2.grad * x2.value;
+    for (Value value : topologicalOrder) {
+      value.computeParentGradient();
+    }
     
     printNode(o, null);
     traverseToTop(o);
-  }
-
-  private static double lossValue() {
-    Value h = new Value(0.001, "h");
-
-    // Inputs
-    double a = 2.0;
-    double b = -3.0;
-    double c = 10.0;
-    double f = -2.0;
-
-    Value l = computeFinalResult(a, b, c, f);
-
-    printNode(l, null);
-    traverseToTop(l);
-
-    return l.value;
-  }
-
-  private static Value computeFinalResult(double av, double bv, double cv, double fv) {
-    // Equation: 
-    // L = f * ((a * b) + c)
-    // L = f * (e + c)
-    // L = f * d
-    Value a = new Value(av, "a");
-    Value b = new Value(bv, "b");
-    Value c = new Value(cv, "c");
-    Value e = a.multiply(b, "e");
-    Value d = e.add(c, "d");
-    Value f = new Value(fv, "f");
-    Value l = d.multiply(f, "L");
-
-    l.grad = 1;
-    f.grad = d.value;
-    d.grad = f.value;
-
-    // dL/de = dL/dd * dd/de
-    e.grad = f.value * 1.0;
-
-    // dL/dc = dL/dd * dd/dc
-    c.grad = f.value * 1.0;
-
-    // dL/da = dL/de * de/da
-    a.grad = e.grad * b.value;
-
-    // dL/db = dL/de * de/db
-    b.grad = e.grad * a.value;
-
-    return l;
   }
 
   private static void traverseToTop(Value node) {
@@ -202,10 +158,6 @@ public class MicroGrad {
         printNode(parentNode, node);
         traverseToTop(parentNode);
     }
-  }
-
-  private static double f(double x) {
-    return (3.0 * Math.pow(x, 2.0)) - (4.0 * x) + 5.0;
   }
 
   private static void printNode(Value node, Value childNode) {
