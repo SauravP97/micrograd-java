@@ -79,17 +79,17 @@ class Value {
         Value parentNode1 = this.parent[0];
         Value parentNode2 = this.parent[1];
 
-        parentNode1.grad = this.grad * 1.0;
-        parentNode2.grad = this.grad * 1.0;
+        parentNode1.grad += this.grad * 1.0;
+        parentNode2.grad += this.grad * 1.0;
     } else if (this.operator == "*") {
         Value parentNode1 = this.parent[0];
         Value parentNode2 = this.parent[1];
 
-        parentNode1.grad = parentNode2.value * this.grad;
-        parentNode2.grad = parentNode1.value * this.grad;
+        parentNode1.grad += parentNode2.value * this.grad;
+        parentNode2.grad += parentNode1.value * this.grad;
     } else if (this.operator == "tanh") {
         Value parentNode = this.parent[0];
-        parentNode.grad = this.grad * (1.0 - Math.pow(this.value, 2.0));
+        parentNode.grad += this.grad * (1.0 - Math.pow(this.value, 2.0));
     }
   }
 
@@ -106,12 +106,89 @@ class Value {
   }
 }
 
-public class MicroGrad {
-  public static void main(String[] args) {
-    neuron();
+class Neuron {
+  Value[] weights;
+  Value bias;
+
+  Neuron(int inputs) {
+    weights = new Value[inputs];
+    for (int i=0; i<inputs; i++) {
+      weights[i] = new Value(Math.random(), "w"+Integer.toString(i));
+    }
+    bias = new Value(Math.random(), "b");
   }
 
-  private static void neuron() {
+  double activate(double[] x) {
+    Value activatedValue = new Value(0.0, "output");
+
+    for (int i = 0; i < x.length; i++) {
+      activatedValue = activatedValue.add(
+        weights[i].multiply(
+          new Value(x[i], "x" + Integer.toString(i)), 
+          "x" + Integer.toString(i) + "w" + Integer.toString(i)), "z");
+    }
+    
+    activatedValue = activatedValue.add(bias, "z");
+
+    return activatedValue.tanh("tan(z)").value;
+  }
+}
+
+class Layer {
+  Neuron[] neurons;
+
+  Layer(int neuron_count, int inputs) {
+    neurons = new Neuron[neuron_count];
+    for (int i=0; i<neuron_count; i++) {
+      neurons[i] = new Neuron(inputs);
+    }
+  }
+
+  double[] activate(double[] x) {
+    double[] outputs = new double[neurons.length];
+    int index = 0;
+    for (Neuron neuron : neurons) {
+      outputs[index] = neuron.activate(x);
+      index++;
+    }
+
+    return outputs;
+  }
+}
+
+
+class MultiLayerPreceptron {
+  Layer[] layers;
+
+  // Eg. layerDistribution = [4, 4, 1]
+  // It means the MLP has 3 layers each having 4, 4 and 1 neurons.
+  MultiLayerPreceptron(int inputs, int[] layerDistribution) {
+    layers = new Layer[layerDistribution.length];
+    layers[0] = new Layer(layerDistribution[0], inputs);
+
+    for (int i=1; i<layerDistribution.length; i++) {
+      layers[i] = new Layer(layerDistribution[i], layerDistribution[i-1]);
+    }
+  }
+
+  double[] activate(double[] x) {
+    for (Layer layer : layers) {
+      x = layer.activate(x);
+    }
+
+    return x;
+  }
+}
+
+public class MicroGrad {
+  public static void main(String[] args) {
+    // neuron();
+    MultiLayerPreceptron mlp = new MultiLayerPreceptron(3, new int[]{4, 4, 1});
+    double[] outputs = mlp.activate(new double[]{2.0, 3.0, -1.0});
+    System.out.println(Arrays.toString(outputs));
+  }
+
+  private static void neuron1() {
     // Equation: n = x1.w1 + x2.w2 + b
     // Equation: o = tanh(n)
 
