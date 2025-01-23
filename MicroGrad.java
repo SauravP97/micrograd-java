@@ -28,6 +28,14 @@ class Value {
     return returnValue;
   }
 
+  Value subtract(Value otherValue, String label) {
+    Value returnValue = new Value(this.value - otherValue.value, label);
+    returnValue.setParent(new Value[]{this, otherValue});
+    returnValue.setOperator("-");
+
+    return returnValue;
+  }
+
   Value multiply(Value otherValue, String label) {
     Value returnValue = new Value(this.value * otherValue.value, label);
     returnValue.setParent(new Value[]{this, otherValue});
@@ -52,10 +60,11 @@ class Value {
 
     recurseTopological(this, topologicalOrder, visited);
 
-    System.out.println("Topological Order: ");
-    for (Value value : topologicalOrder) {
-      System.out.println(value.label);
-    }
+    // Comment the below lines to print the nodes in topological order.
+    // System.out.println("Topological Order: ");
+    // for (Value value : topologicalOrder) {
+    //   System.out.println(value.label);
+    // }
 
     return topologicalOrder;
   }
@@ -76,20 +85,26 @@ class Value {
 
   void computeParentGradient() {
     if (this.operator == "+") {
-        Value parentNode1 = this.parent[0];
-        Value parentNode2 = this.parent[1];
+      Value parentNode1 = this.parent[0];
+      Value parentNode2 = this.parent[1];
 
-        parentNode1.grad += this.grad * 1.0;
-        parentNode2.grad += this.grad * 1.0;
+      parentNode1.grad += this.grad * 1.0;
+      parentNode2.grad += this.grad * 1.0;
     } else if (this.operator == "*") {
-        Value parentNode1 = this.parent[0];
-        Value parentNode2 = this.parent[1];
+      Value parentNode1 = this.parent[0];
+      Value parentNode2 = this.parent[1];
 
-        parentNode1.grad += parentNode2.value * this.grad;
-        parentNode2.grad += parentNode1.value * this.grad;
+      parentNode1.grad += parentNode2.value * this.grad;
+      parentNode2.grad += parentNode1.value * this.grad;
     } else if (this.operator == "tanh") {
-        Value parentNode = this.parent[0];
-        parentNode.grad += this.grad * (1.0 - Math.pow(this.value, 2.0));
+      Value parentNode = this.parent[0];
+      parentNode.grad += this.grad * (1.0 - Math.pow(this.value, 2.0));
+    } else if (this.operator == "-") {
+      Value parentNode1 = this.parent[0];
+      Value parentNode2 = this.parent[1];
+
+      parentNode1.grad += this.grad * 1.0;
+      parentNode2.grad += this.grad * -1.0;
     }
   }
 
@@ -113,24 +128,34 @@ class Neuron {
   Neuron(int inputs) {
     weights = new Value[inputs];
     for (int i=0; i<inputs; i++) {
-      weights[i] = new Value(Math.random(), "w"+Integer.toString(i));
+      weights[i] = new Value(Math.random(), "w"+Integer.toString(i+1));
     }
     bias = new Value(Math.random(), "b");
   }
 
-  double activate(double[] x) {
+  Value activate(Value[] x) {
     Value activatedValue = new Value(0.0, "output");
 
     for (int i = 0; i < x.length; i++) {
       activatedValue = activatedValue.add(
         weights[i].multiply(
-          new Value(x[i], "x" + Integer.toString(i)), 
-          "x" + Integer.toString(i) + "w" + Integer.toString(i)), "z");
+          new Value(x[i].value, "x" + Integer.toString(i+1)), 
+          "x" + Integer.toString(i+1) + "w" + Integer.toString(i+1)), "z");
     }
     
     activatedValue = activatedValue.add(bias, "z");
 
-    return activatedValue.tanh("tan(z)").value;
+    return activatedValue.tanh("tan(z)");
+  }
+
+  List<Value> parameters() {
+    List<Value> parameters = new ArrayList<>();
+    for (int i=0; i<weights.length; i++) {
+      parameters.add(weights[i]);
+    }
+    parameters.add(bias);
+
+    return parameters;
   }
 }
 
@@ -144,8 +169,8 @@ class Layer {
     }
   }
 
-  double[] activate(double[] x) {
-    double[] outputs = new double[neurons.length];
+  Value[] activate(Value[] x) {
+    Value[] outputs = new Value[neurons.length];
     int index = 0;
     for (Neuron neuron : neurons) {
       outputs[index] = neuron.activate(x);
@@ -153,6 +178,16 @@ class Layer {
     }
 
     return outputs;
+  }
+  
+  List<Value> parameters() {
+    List<Value> parameters = new ArrayList<>();
+
+    for (int i=0; i<neurons.length; i++) {
+      parameters.addAll(neurons[i].parameters());
+    }
+
+    return parameters;
   }
 }
 
@@ -171,58 +206,95 @@ class MultiLayerPreceptron {
     }
   }
 
-  double[] activate(double[] x) {
+  Value[] activate(Value[] x) {
     for (Layer layer : layers) {
       x = layer.activate(x);
     }
 
     return x;
   }
+
+  List<Value> parameters() {
+    List<Value> parameters = new ArrayList<>();
+
+    for (int i=0; i<layers.length; i++) {
+      parameters.addAll(layers[i].parameters());
+    }
+
+    return parameters;
+  }
 }
 
 public class MicroGrad {
-  public static void main(String[] args) {
-    // neuron();
-    MultiLayerPreceptron mlp = new MultiLayerPreceptron(3, new int[]{4, 4, 1});
-    double[] outputs = mlp.activate(new double[]{2.0, 3.0, -1.0});
-    System.out.println(Arrays.toString(outputs));
+  private static Value[][] buildTrainingData() {
+    Value[][] train = {
+      new Value[]{new Value(2.0, "x1"), new Value(3.0, "x2"), new Value(-1.0, "x3")},
+      new Value[]{new Value(3.0, "x1"), new Value(-1.0, "x2"), new Value(0.5, "x3")},
+      new Value[]{new Value(0.5, "x1"), new Value(1.0, "x2"), new Value(1.0, "x3")},
+      new Value[]{new Value(1.0, "x1"), new Value(1.0, "x2"), new Value(-1.0, "x3")}
+    };
+
+    return train;
   }
 
-  private static void neuron1() {
-    // Equation: n = x1.w1 + x2.w2 + b
-    // Equation: o = tanh(n)
+  private static Value[] buildLabelOutput() {
+    return new Value[]{new Value(1.0, "y1"), new Value(-1.0, "y2"), new Value(-1.0, "y3"), new Value(1.0, "y4")};
+  }
 
-    // Inputs x1, x2
-    Value x1 = new Value(2.0, "x1");
-    Value x2 = new Value(0.0, "x2");
+  public static void main(String[] args) {
+    // Initialize Neural Net
+    MultiLayerPreceptron mlp = new MultiLayerPreceptron(3, new int[]{4, 4, 1});
+
+    // Forward Propogation
+    // Value[] test1 = new Value[]{new Value(2.0, "x1"), new Value(3.0, "x2"), new Value(-1.0, "x3")};
+    // Value[] test2 = new Value[]{new Value(3.0, "x1"), new Value(-1.0, "x2"), new Value(0.5, "x3")};
+    // Value[] test3 = new Value[]{new Value(0.5, "x1"), new Value(1.0, "x2"), new Value(1.0, "x3")};
+    // Value[] test4 = new Value[]{new Value(1.0, "x1"), new Value(1.0, "x2"), new Value(-1.0, "x3")};
+
+    Value[][] train = buildTrainingData();
+    Value[] actual = buildLabelOutput();
+    double learningRate = 0.01;
+
+    // Iterations
+    for (int x = 0; x<3; x++) {
+      Value[][] pred = new Value[actual.length][1];
+      Value netLoss = new Value(0.0, "netLoss");
+
+      for (int i=0; i<train.length; i++) {
+        pred[i] = mlp.activate(train[i]);
+        Value curLoss1 = pred[i][0].subtract(actual[i], "loss1");
+        Value curLoss2 = pred[i][0].subtract(actual[i], "loss2");
+        Value curLoss = curLoss1.multiply(curLoss2, "loss");
+
+        netLoss = netLoss.add(curLoss, "netLoss");
+      }
     
-    // Weights w1, w2
-    Value w1 = new Value(-3.0, "w1");
-    Value w2 = new Value(1.0, "w2");
+      System.out.println("Net Loss: ");
+      printNode(netLoss, null);
 
-    // Bias of the neuron
-    Value b = new Value(6.88, "b");
-
-    Value x1w1 = x1.multiply(w1, "x1.w1");
-    Value x2w2 = x2.multiply(w2, "x2.w2");
-    Value x1w1x2w2 = x1w1.add(x2w2, "x1.w1 + x2.w2");
-
-    Value n = x1w1x2w2.add(b, "n");
-    Value o = n.tanh("o");
-
-    ArrayList<Value> topologicalOrder = o.getTopologicalOrder();
+      ArrayList<Value> topologicalOrder = netLoss.getTopologicalOrder();
     
-    // Traversing in the reverse Topological order to make sure the
-    // dependencies have their gradient calculated beforehand.
-    Collections.reverse(topologicalOrder);
+      // Traversing in the reverse Topological order to make sure the
+      // dependencies have their gradient calculated beforehand.
+      Collections.reverse(topologicalOrder);
 
-    o.grad = 1.0;
-    for (Value value : topologicalOrder) {
-      value.computeParentGradient();
+      // Back Propogation
+      netLoss.grad = 1.0;
+      for (Value value : topologicalOrder) {
+        value.computeParentGradient();
+      }
+
+      // Print Nodes
+      // printNode(netLoss, null);
+      // traverseToTop(netLoss);
+
+      // Adjust the parameters of the Neural Net post Back prop.
+      List<Value> parameters = mlp.parameters();
+      System.out.println(parameters.size());
+      for (Value parameter : parameters) {
+        parameter.value -= learningRate * parameter.grad;
+      }
     }
-    
-    printNode(o, null);
-    traverseToTop(o);
   }
 
   private static void traverseToTop(Value node) {
