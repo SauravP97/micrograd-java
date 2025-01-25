@@ -9,16 +9,16 @@ public class MultiLayerPreceptron {
   // It means the MLP has 3 layers each having 4, 4 and 1 neurons.
   MultiLayerPreceptron(int inputs, int[] layerDistribution) {
     layers = new Layer[layerDistribution.length];
-    layers[0] = new Layer(layerDistribution[0], inputs);
+    layers[0] = new Layer(0+1, layerDistribution[0], inputs);
 
     for (int i=1; i<layerDistribution.length; i++) {
-      layers[i] = new Layer(layerDistribution[i], layerDistribution[i-1]);
+      layers[i] = new Layer(i+1, layerDistribution[i], layerDistribution[i-1]);
     }
   }
 
   Value[] activate(Value[] x) {
-    for (Layer layer : layers) {
-      x = layer.activate(x);
+    for (int i=0; i<layers.length; i++) {
+      x = layers[i].activate(x);
     }
 
     return x;

@@ -2,6 +2,9 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Arrays;
+import java.util.LinkedList;
+import java.util.Queue;
 
 public class MicroGrad {
   public static void main(String[] args) {
@@ -10,10 +13,10 @@ public class MicroGrad {
 
     Value[][] train = buildTrainingData();
     Value[] actual = buildLabelOutput();
-    double learningRate = 0.01;
+    double learningRate = -0.05;
 
     // Iterations
-    for (int x = 0; x<3; x++) {
+    for (int x = 0; x<100; x++) {
       Value[][] pred = new Value[actual.length][1];
       Value netLoss = new Value(0.0, "netLoss");
 
@@ -35,30 +38,50 @@ public class MicroGrad {
       // dependencies have their gradient calculated beforehand.
       Collections.reverse(topologicalOrder);
 
+      // Flush out the gradient values (zero_grad)
+      List<Value> parameters = mlp.parameters();
+      for (Value parameter : parameters) {
+        parameter.grad = 0;
+      }
+
       // Back Propogation
       netLoss.grad = 1.0;
       for (Value value : topologicalOrder) {
         value.computeParentGradient();
       }
-      
+
+      // printNode(netLoss, null);
+      // traverseToTop(netLoss, 0);
+
       // Adjust the parameters of the Neural Net post Back prop.
-      List<Value> parameters = mlp.parameters();
-      System.out.println(parameters.size());
       for (Value parameter : parameters) {
-        parameter.value -= learningRate * parameter.grad;
+        System.out.println("Gradient: " + parameter.grad + " " +  parameter.label);
+        parameter.value += learningRate * parameter.grad;
       }
+
+      System.out.println("Predicted Values: " + pred[0][0].value + " " + pred[1][0].value + " " + pred[2][0].value + " " + pred[3][0].value);
     }
   }
 
-  private static void traverseToTop(Value node) {
+  private static void traverseToTop(Value node, int count) {
+    System.out.println("Counter: " + count);
     if (node.parent == null || node.parent.length == 0) {
         return;
     }
 
-    for (int i=0; i<node.parent.length; i++) {
-        Value parentNode = node.parent[i];
-        printNode(parentNode, node);
-        traverseToTop(parentNode);
+    Queue<Value> queue = new LinkedList<>();
+    queue.add(node);
+
+    while (!queue.isEmpty()) {
+      Value childNode = queue.remove();
+      if (childNode.parent == null || childNode.parent.length == 0) {
+        continue;
+      }
+
+      for (int i=0; i<childNode.parent.length; i++) {
+        queue.add(childNode.parent[i]);
+        printNode(childNode.parent[i], childNode); 
+      }
     }
   }
 

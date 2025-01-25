@@ -5,10 +5,10 @@ import java.util.List;
 class Layer {
   Neuron[] neurons;
 
-  Layer(int neuron_count, int inputs) {
+  Layer(int layerId, int neuron_count, int inputs) {
     neurons = new Neuron[neuron_count];
     for (int i=0; i<neuron_count; i++) {
-      neurons[i] = new Neuron(inputs);
+      neurons[i] = new Neuron(i+1, layerId, inputs);
     }
   }
 
