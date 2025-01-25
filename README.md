@@ -97,6 +97,17 @@ class Neuron {
 
 ![MLP](/media/mlp.jpeg)
 
+## Training Micrograd on the Binary Classifier sample
+
+We used a sample dataset of points scattered on a 2D plans. Each dataset row has two parameters X1 and X2 depicting the position of that point on the 2D Plane.
+We also have the sample Y which classifies the dataset into red (-1) or blue (1) class.
+
+Traning data: [train.csv](/dataset/train.csv)
+Predictions made by the neural net: [predictions](/dataset/predictions.txt)
+
+Training micrograd with 2 hidden layers having 16 neurons each on the above sample dataset, classified them into two categories.
+
+![Prediction](/media/prediction.png)
 
 ## Reference
 

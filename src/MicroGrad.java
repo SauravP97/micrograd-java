@@ -5,31 +5,35 @@ import java.util.List;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.Queue;
+import java.io.BufferedReader;  
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;  
 
 public class MicroGrad {
-  public static void main(String[] args) {
+  public static void main(String[] args) throws IOException {
     // Initialize Neural Net
-    MultiLayerPreceptron mlp = new MultiLayerPreceptron(3, new int[]{4, 4, 1});
+    MultiLayerPreceptron mlp = new MultiLayerPreceptron(2, new int[]{16, 16, 1});
 
     Value[][] train = buildTrainingData();
     Value[] actual = buildLabelOutput();
-    double learningRate = -0.05;
+    double learningRate = -0.01;
 
     // Iterations
     for (int x = 0; x<1000; x++) {
-      Value[][] pred = new Value[actual.length][1];
+      Value[] pred = new Value[actual.length];
       Value netLoss = new Value(0.0, "netLoss");
 
       for (int i=0; i<train.length; i++) {
-        pred[i] = mlp.activate(train[i]);
-        Value curLoss1 = pred[i][0].subtract(actual[i], "loss1");
-        Value curLoss2 = pred[i][0].subtract(actual[i], "loss2");
+        pred[i] = mlp.activate(train[i])[0];
+        Value curLoss1 = pred[i].subtract(actual[i], "loss1");
+        Value curLoss2 = pred[i].subtract(actual[i], "loss2");
         Value curLoss = curLoss1.multiply(curLoss2, "loss");
 
         netLoss = netLoss.add(curLoss, "netLoss");
       }
     
-      System.out.println("Net Loss: ");
+      System.out.println("Net Loss at iteration: " + x);
       printNode(netLoss, null);
 
       ArrayList<Value> topologicalOrder = netLoss.getTopologicalOrder();
@@ -55,12 +59,22 @@ public class MicroGrad {
 
       // Adjust the parameters of the Neural Net post Back prop.
       for (Value parameter : parameters) {
-        System.out.println("Gradient: " + parameter.grad + " " +  parameter.label);
+        // System.out.println("Gradient: " + parameter.grad + " " +  parameter.label);
         parameter.value += learningRate * parameter.grad;
       }
 
-      System.out.println("Predicted Values: " + pred[0][0].value + " " + pred[1][0].value + " " + pred[2][0].value + " " + pred[3][0].value);
+      if (x == 999) {
+        saveFinalPreditcion(pred);
+      }
     }
+  }
+
+  private static void saveFinalPreditcion(Value[] pred) throws IOException {
+    FileWriter myWriter = new FileWriter("../dataset/predictions.txt");
+    for (int i=0; i<pred.length; i++) {
+      myWriter.write(pred[i].value + "\n");
+    }
+    myWriter.close();
   }
 
   private static void traverseToTop(Value node, int count) {
@@ -96,18 +110,38 @@ public class MicroGrad {
     System.out.println();
   }
 
-  private static Value[][] buildTrainingData() {
-    Value[][] train = {
-      new Value[]{new Value(2.0, "x1"), new Value(3.0, "x2"), new Value(-1.0, "x3")},
-      new Value[]{new Value(3.0, "x1"), new Value(-1.0, "x2"), new Value(0.5, "x3")},
-      new Value[]{new Value(0.5, "x1"), new Value(1.0, "x2"), new Value(1.0, "x3")},
-      new Value[]{new Value(1.0, "x1"), new Value(1.0, "x2"), new Value(-1.0, "x3")}
-    };
+  private static Value[][] buildTrainingData() throws IOException {
+    Value[][] train = new Value[100][2];
+    BufferedReader br = new BufferedReader(new FileReader("../dataset/train.csv"));
+    int index = 0;
+    String line = "";
+
+    while ((line = br.readLine()) != null) {  
+      String[] row = line.split(",");
+      double x1 = Double.parseDouble(row[1]);
+      double x2 = Double.parseDouble(row[2]);
+      train[index] = new Value[]{new Value(x1, "x1"), new Value(x2, "x2")};
+      // System.out.println(x1 + " " + x2);
+      index++; 
+    }
 
     return train;
   }
 
-  private static Value[] buildLabelOutput() {
-    return new Value[]{new Value(1.0, "y1"), new Value(-1.0, "y2"), new Value(-1.0, "y3"), new Value(1.0, "y4")};
+  private static Value[] buildLabelOutput() throws IOException {
+    Value[] y = new Value[100];
+    BufferedReader br = new BufferedReader(new FileReader("../dataset/train.csv"));
+    int index = 0;
+    String line = "";
+
+    while ((line = br.readLine()) != null) {  
+      String[] row = line.split(",");
+      double yLabel = Double.parseDouble(row[3]);
+      y[index] = new Value(yLabel, "y");
+      // System.out.println(yLabel);
+      index++;
+    }
+
+    return y;
   }
 }
