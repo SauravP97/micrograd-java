@@ -107,7 +107,7 @@ Predictions made by the neural net: [predictions](/dataset/predictions.txt)
 
 Training micrograd with 2 hidden layers having 16 neurons each on the above sample dataset, classified them into two categories.
 
-![Prediction](/media/prediction.png)
+<img src="./media/prediction.png" width=300 height=300>
 
 ## Reference
 
