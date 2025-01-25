@@ -16,7 +16,7 @@ public class MicroGrad {
     double learningRate = -0.05;
 
     // Iterations
-    for (int x = 0; x<100; x++) {
+    for (int x = 0; x<1000; x++) {
       Value[][] pred = new Value[actual.length][1];
       Value netLoss = new Value(0.0, "netLoss");
 
