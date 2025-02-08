@@ -90,7 +90,7 @@ A Layer looks like this.
 A multi-layer perceptron is a collection of **Layers**. An MLP can have multiple Layers where the output of a layer is an input given to the subsequent layer and so on. The final result of the last layer is considered as an output of the Neural Net. We can configure the **number of layers** and the **number of neurons** present in each layer of our Neural Net architecture.
 
 ```
-class Neuron {
+class MultiLayerPerceptron {
   Layer[] layers;
 }
 ```
@@ -102,8 +102,8 @@ class Neuron {
 We used a sample dataset of points scattered on a 2D plans. Each dataset row has two parameters X1 and X2 depicting the position of that point on the 2D Plane.
 We also have the sample Y which classifies the dataset into red (-1) or blue (1) class.
 
-Traning data: [train.csv](/dataset/train.csv)
-Predictions made by the neural net: [predictions](/dataset/predictions.txt)
+- Traning data: [train.csv](/dataset/train.csv)
+- Predictions made by the neural net: [predictions](/dataset/predictions.txt)
 
 Training micrograd with 2 hidden layers having 16 neurons each on the above sample dataset, classified them into two categories.
 
