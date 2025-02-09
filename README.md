@@ -47,7 +47,9 @@ Since every Value node stores the reference to their parents in the equation, we
 
 We backtrack and use chain rule to **multiply** the gradient of the dependent terms and get the gradient of each term calculated. It is necessary to calculate the gradient of the children's nodes first before computing their parent’ gradient. To ensure this, we perform the [Topological Sorting](https://en.wikipedia.org/wiki/Topological_sorting) of the Mathematical equation graph and compute gradients in the **reverse topological order**.
 
-## Neuron
+## Structure of a Neural Network
+
+### Neuron
 
 A Neuron is a building block of our Neural Net and every Neuron object will have some **weights** and **bias**. In order to perform backtracking to compute gradients and preserve the equation, we will keep weights and bias as the **Value** class.
 
@@ -77,7 +79,7 @@ We have used a tanh [activation function](https://paperswithcode.com/method/tanh
 output = tanh(y)
 ```
 
-## Layer
+### Layer
 
 Layer is a collection of **Neurons**. It activates each Neuron in their list and returns their output.
 
@@ -85,7 +87,7 @@ A Layer looks like this.
 
 ![Layer](/media/layer.jpeg)
 
-## MultiLayer Perceptron
+### MultiLayer Perceptron
 
 A multi-layer perceptron is a collection of **Layers**. An MLP can have multiple Layers where the output of a layer is an input given to the subsequent layer and so on. The final result of the last layer is considered as an output of the Neural Net. We can configure the **number of layers** and the **number of neurons** present in each layer of our Neural Net architecture.
 
@@ -96,6 +98,93 @@ class MultiLayerPerceptron {
 ```
 
 ![MLP](/media/mlp.jpeg)
+
+## Backpropagation
+
+**Backpropagation** is the process of estimating the derivatives or gradients of the parameters present in the **Neural Network** with respect to its **Loss Function** with a goal to **minimize** the Loss value and hence increasing the **accuracy** of the model.
+
+The method uses the concept of **Chain Rule** to determine the gradients of the parameters which are indirectly dependent (through some intermediate parameters) to the Loss Function and influence its value.
+
+The whole idea is to calculate the gradients of the parameters with respect to the loss function and tune the parameters in the opposite direction of the gradient to reduce the loss function. This is a crucial part which happens when the **weights** and **biases** are updated post the backpropagation process.
+
+### Understanding the mathematics involved
+
+Let’s understand the backpropagation process with the help of a simple mathematical equation.
+
+Here we have a mathematical equation to understand the backpropagation process. The equation is inspired from the **activation** process of a Neural Network. Let's take an example of a **Neuron** in a Neural Network fed with **3** input parameters (**x0**, **x1** and **x2**).
+
+Now every Neuron will have **Weights** assigned to these input parameters along with a **Bias** which will be tuned as our model trains and learns the input dataset patterns. The first process is to calculate the output of the Neuron and this process is called **Forward Pass** or **Forward Propagation**.
+
+The calculation of the output of Neuron happens as follows:
+
+```python
+y = w0.x0 + w1.x1 + w2.x2 + b
+output = activation_function(y)
+```
+
+The result is fed into an **Activation Function** to get the final output of the neuron. We will consider the first part of the above calculation to understand the backpropagation process.
+
+```python
+from micrograd.engine import Value
+
+w0 = Value(1.3, label="w0")
+x0 = Value(1.6, label="x0")
+
+w1 = Value(1.2, label="w1")
+x1 = Value(0.8, label="x1")
+
+w2 = Value(1.1, label="w2")
+x2 = Value(0.5, label="x2")
+
+b = Value(0.2, label="b")
+
+w0x0 = w0 * x0
+w0x0.label = "w0.x0"
+w1x1 = w1 * x1
+w1x1.label = "w1.x1"
+w2x2 = w2 * x2
+w2x2.label = "w2.x2"
+
+w0x0w1x1 = w0x0 + w1x1
+w0x0w1x1.label = "w0x0 + w1x1"
+
+w0x0w1x1w2x2 = w0x0w1x1 + w2x2
+w0x0w1x1w2x2.label = "w0x0 + w1x1 + w2x2"
+
+y = w0x0w1x1w2x2 + b
+y.label = "y"
+```
+
+The above code block computes the output y of the neuron. I have used the Value wrapper class to help visualize the equation we built step by step. You can checkout Andrej's [micrograd](https://github.com/karpathy/micrograd) repo to understand more about this.
+
+Let us now visualize the above mathematical equation to understand this in-depth.
+
+![Backprop without grads](/media/backprop-without-grad.png)
+
+The above flowchart depicts the above mathematical equation for calculating y. This graph representation of the equation will further help us in understanding the **Backpropagation** process.
+
+As our next step we will back-propagate though the above equation and calculate the **gradient** / derivative of each terms with respect to the final value **y**.
+
+We will extensively use the [Chain Rule](https://en.wikipedia.org/wiki/Chain_rule) to calculate the gradient of the intermediate terms with respect to the output **y**.
+
+The gradient of all the terms will look like this:
+
+![Backprop with grads](/media/backprop-with-grad.png)
+
+The gradient values in the above diagram shows the influence of each term on the final output y.
+
+In Neural Networks we use the same backpropagation technique on our calculated Loss function. The forward pass provides the Predicted Output from the Neural Net which is then compared with the Actual Output to determine the overall loss. Then we use Backpropagation to find the derivative of the parameters (weights and biases of the neurons) with respect to the Loss function.
+
+We finally adjust the parameters of the neural network with the help of their respective calculated gradients to minimize the overall loss.
+
+This will look somewhat like this.
+
+```python
+for parameter in neural_net.parameters():
+  parameter.data -= learning_rate * parameter.gradient
+```
+
+The entire iteration of Forward and Backward propagation (along with updating the parameters) happens multiple times until the loss gets reduced to an acceptable value.
 
 ## Training Micrograd on the Binary Classifier sample
 
