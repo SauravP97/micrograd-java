@@ -81,7 +81,7 @@ class Neuron {
 
 A Neuron can be represented as:
 
-![A neuron](/media/neuron.jpeg)
+![A neuron](/media/neuron-full.png)
 
 Each neuron takes a collection of parameters (x) as an input and assigns weights (w) against each parameter along with a bias (b) added to the result. The equation is as follows:
 
@@ -135,6 +135,8 @@ Let’s understand the backpropagation process with the help of a simple mathema
 Here we have a mathematical equation to understand the backpropagation process. The equation is inspired from the **activation** process of a Neural Network. Let's take an example of a **Neuron** in a Neural Network fed with **3** input parameters (**x0**, **x1** and **x2**).
 
 Now every Neuron will have **Weights** assigned to these input parameters along with a **Bias** which will be tuned as our model trains and learns the input dataset patterns. The first process is to calculate the output of the Neuron and this process is called **Forward Pass** or **Forward Propagation**.
+
+![A neuron](/media/neuron.jpeg)
 
 The calculation of the output of Neuron happens as follows:
 
