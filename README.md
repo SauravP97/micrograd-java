@@ -1,5 +1,24 @@
-# micrograd | A Neural Net from scratch (in Java)
+# micrograd | A Deep Neural Net from scratch (in Java)
 
+A good first repo to understand the basics of a Deep Neural Net.
+
+## Topics Covered
+
+1. Introduction
+2. Value class to visualize Mathematical equations
+3. Structure of a Neural Network
+      
+    1. Neuron
+    2. Layer
+    3. Multi-layer Perceptron
+
+4. Backpropagation
+
+    1. Understanding the Mathematics involved
+
+5. Training Micrograd on the Binary Classifier sample
+6. Reference
+ 
 ## Introduction
 
 **micrograd** is an Autograd engine developed by [Andrej Kerpathy](https://github.com/karpathy). This repo covers the **Java** implementation of [micrograd](https://github.com/karpathy/micrograd). We will start with building a **Value** class which allows us to convey mathematical equations by holding the numerical terms, operators, reference to the parent terms, label and gradient. We will use the Value class to build our **Neuron** over which we will build **Layers** (collection of Neurons) and **Multilayer Perceptron** (collection of Layers) which will lay the foundation of our deep neural network.
@@ -107,6 +126,8 @@ The method uses the concept of **Chain Rule** to determine the gradients of the 
 
 The whole idea is to calculate the gradients of the parameters with respect to the loss function and tune the parameters in the opposite direction of the gradient to reduce the loss function. This is a crucial part which happens when the **weights** and **biases** are updated post the backpropagation process.
 
+![Backprop](media/backprop.png)
+
 ### Understanding the mathematics involved
 
 Let’s understand the backpropagation process with the help of a simple mathematical equation.
@@ -201,4 +222,8 @@ Training micrograd with 2 hidden layers having 16 neurons each on the above samp
 ## Reference
 
 - Original repo for micrograd: [Check Out](https://github.com/karpathy/micrograd)
+- [Chain Rule](https://en.wikipedia.org/wiki/Chain_rule)
+- [Topological Sorting](https://en.wikipedia.org/wiki/Topological_sorting)
+- [Activation Function](https://paperswithcode.com/method/tanh-activation)
+- [Anrej's github](https://github.com/karpathy)
 
