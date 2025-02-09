@@ -4,20 +4,20 @@ A good first repo to understand the basics of a Deep Neural Net.
 
 ## Topics Covered
 
-1. Introduction
-2. Value class to visualize Mathematical equations
-3. Structure of a Neural Network
+1. [Introduction](#introduction)
+2. [Value class to visualize Mathematical equations](#value-a-class-representing-mathematical-equation)
+3. [Structure of a Neural Network](#structure-of-a-neural-network)
       
-    1. Neuron
-    2. Layer
-    3. Multi-layer Perceptron
+    1. [Neuron](#neuron)
+    2. [Layer](#layer)
+    3. [Multi-layer Perceptron](#multilayer-perceptron)
 
-4. Backpropagation
+4. [Backpropagation](#backpropagation)
 
-    1. Understanding the Mathematics involved
+    1. [Understanding the Mathematics involved](#understanding-the-mathematics-involved)
 
-5. Training Micrograd on the Binary Classifier sample
-6. Reference
+5. [Training Micrograd on the Binary Classifier sample](#training-micrograd-on-the-binary-classifier-sample)
+6. [Reference](#reference)
  
 ## Introduction
 
