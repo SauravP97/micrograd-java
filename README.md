@@ -163,11 +163,11 @@ Hence, each layer is effectively learning a more complex, higher-level function 
 
 In this repo we have used **Tanh** as an Activation Function which is as follows.
 
-![Tanh](/media/tanh.png)
+<img src="https://raw.githubusercontent.com/SauravP97/micrograd-java/refs/heads/master/media/tanh.png" width=200>
 
 The growth of the activation function with the inputs looks somewhat like this.
 
-![Tanh graph](/media/activation-function.png)
+<img src="https://raw.githubusercontent.com/SauravP97/micrograd-java/refs/heads/master/media/activation-function.png" width=400>
 
 We can visualize the tanh activation function that distributes the output of a neuron in a decent range of **[-1 to 1]**.
 
