@@ -163,7 +163,7 @@ Hence, each layer is effectively learning a more complex, higher-level function 
 
 In this repo we have used **Tanh** as an Activation Function which is as follows.
 
-<img src="https://raw.githubusercontent.com/SauravP97/micrograd-java/refs/heads/master/media/tanh.png" width=200>
+<img src="https://raw.githubusercontent.com/SauravP97/micrograd-java/refs/heads/master/media/tanh.png" width=250>
 
 The growth of the activation function with the inputs looks somewhat like this.
 
